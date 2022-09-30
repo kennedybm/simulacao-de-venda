@@ -1,8 +1,11 @@
+import Form from "../../components/Form";
+import { MainContainer } from "./style";
+
 const SimulationPage = () => {
   return (
-    <>
-      <div>Simulation</div>
-    </>
+    <MainContainer>
+      <Form name="simulation"></Form>
+    </MainContainer>
   );
 };
 export default SimulationPage;
