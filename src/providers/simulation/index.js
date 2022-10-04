@@ -4,17 +4,28 @@ import { simulationApi } from "../../services/api";
 const SimulationContext = createContext();
 
 export const SimulationProvider = ({ children }) => {
-  const [simulation, setSimulation] = useState();
+  const [simulationData, setSimulationData] = useState();
 
-  simulationApi
-    .post()
-    .then((resp) => {
-      console.log(resp);
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+  const handleSimulation = (data) => {
+    // console.log(data);
+    simulationApi
+      .post("", data)
+      .then((resp) => {
+        const newData = [];
+        newData.push(resp.data);
+        setSimulationData(newData);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
 
-  return <SimulationContext.Provider>{children}</SimulationContext.Provider>;
+  return (
+    <SimulationContext.Provider
+      value={{ simulationData, setSimulationData, handleSimulation }}
+    >
+      {children}
+    </SimulationContext.Provider>
+  );
 };
 export const useSimulation = () => useContext(SimulationContext);

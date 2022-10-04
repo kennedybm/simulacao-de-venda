@@ -24,11 +24,13 @@ time, mark, audio, video {
 :root{
 	--black: #000;
 	--white: #fefff9;
-	--primary: #121212;
-	--second: #392c41;
+	--primary: #0e1117;
+	--second: #1d1e26;
+	--third: #392c41;
+	--text: #9b9da2;
 	--decor: #00eb58;
 }
-article, aside, details, figcaption, figure, 
+article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
 	display: block;
 }

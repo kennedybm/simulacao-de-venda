@@ -1,17 +1,41 @@
 import { useState } from "react";
-import { StyledForm } from "./style";
+import {
+  StyledForm,
+  ModalBox,
+  ModalContainer,
+  ButtonBox,
+  FormButton,
+  ModalButton,
+} from "./style";
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Input from "../Input";
+import { useModalController } from "../../providers/modalController";
+import { useSimulation } from "../../providers/simulation";
+import Modal from "../../components/Modal";
 
 const Form = ({ name }) => {
+  const { selectedDays, toggleModal, handleModal } = useModalController();
+  const { handleSimulation } = useSimulation();
   const [values, setValues] = useState({ amount: "" });
-  const [selectedDays, setSelectDays] = useState([]);
+
+  const currencyMask = (e) => {
+    let value = e.target.value;
+    value = value.replace(/\D/g, "");
+    value = value.replace(/(\d)(\d{2})$/, "$1.$2");
+    value = value.replace(/(?=(\d{3})+(\D))\B/g, ",");
+    e.target.value = value;
+    return e;
+  };
+
+  const handleValues = (e) => {
+    setValues({ ...values, [e.target.name]: e.target.value });
+  };
 
   const simulationSchema = yup.object().shape({
     amount: yup.string().required("Campo obrigatório"),
-    installment: yup
+    installments: yup
       .string()
       .required("Campo obrigatório")
       .matches(/^[0-9]*$/, "Apenas números"),
@@ -29,45 +53,60 @@ const Form = ({ name }) => {
     resolver: yupResolver(simulationSchema),
   });
 
-  const handleSimulation = (data) => {
+  const handleRequestObj = (data) => {
     let toModify = values.amount;
     let modified = "";
     let requestObj = {};
 
-    if (toModify[6] && toModify[7] === "0") {
-      modified = toModify.substring(0, 5);
-      modified = parseInt(modified.replace(/[\D]+/g, ""));
-      requestObj = {
-        amount: modified,
-        installment: parseInt(data.installment),
-        mdr: parseInt(data.mdr),
-      };
+    if (selectedDays !== undefined) {
+      if (toModify[6] && toModify[7] === "0") {
+        modified = toModify.substring(0, 5);
+        modified = parseInt(modified.replace(/[\D]+/g, ""));
+        requestObj = {
+          amount: modified,
+          installments: parseInt(data.installments),
+          mdr: parseInt(data.mdr),
+          days: selectedDays,
+        };
+      } else if (toModify[6] || toModify[7] > "0") {
+        modified = parseInt(toModify.replace(/[^\d]+/g, ""));
+        requestObj = {
+          amount: modified,
+          installments: parseInt(data.installments),
+          mdr: parseInt(data.mdr),
+          days: selectedDays,
+        };
+      }
+    } else if (selectedDays === undefined) {
+      if (toModify[6] && toModify[7] === "0") {
+        modified = toModify.substring(0, 5);
+        modified = parseInt(modified.replace(/[\D]+/g, ""));
+        requestObj = {
+          amount: modified,
+          installments: parseInt(data.installments),
+          mdr: parseInt(data.mdr),
+        };
+      } else if (toModify[6] || toModify[7] > "0") {
+        modified = parseInt(toModify.replace(/[^\d]+/g, ""));
+        requestObj = {
+          amount: modified,
+          installments: parseInt(data.installments),
+          mdr: parseInt(data.mdr),
+        };
+      }
     }
-    //criar o modal de array (days)
-    console.log(toModify);
-    console.log(modified);
-    console.log(requestObj);
-  };
 
-  const currencyMask = (e) => {
-    let value = e.target.value;
-    value = value.replace(/\D/g, "");
-    value = value.replace(/(\d)(\d{2})$/, "$1.$2");
-    value = value.replace(/(?=(\d{3})+(\D))\B/g, ",");
-    e.target.value = value;
-    return e;
-  };
-
-  const handleValues = (e) => {
-    setValues({ ...values, [e.target.name]: e.target.value });
+    handleSimulation(requestObj);
   };
 
   switch (name.toLowerCase()) {
     case "simulation":
       return (
         <>
-          <StyledForm onSubmit={handleSubmit(handleSimulation)}>
+          {toggleModal && <Modal handleModal={handleModal} name="days" />}
+          <StyledForm onSubmit={handleSubmit(handleRequestObj)}>
             {!!errors.amount && <span>{errors.amount.message}</span>}
+            <span>informe o valor da venda*</span>
             <Input
               type="text"
               placeholder="R$"
@@ -76,21 +115,35 @@ const Form = ({ name }) => {
               onChange={(e) => handleValues(currencyMask(e))}
               register={register}
             />
-            {!!errors.installment && <span>{errors.installment.message}</span>}
+            {!!errors.installments && (
+              <span>{errors.installments.message}</span>
+            )}
+            <span>em quantas parcelas*</span>
             <Input
               type="text"
-              placeholder="Installments"
-              name="installment"
+              placeholder="Parcelas"
+              name="installments"
               register={register}
             />
             {!!errors.mdr && <span>{errors.mdr.message}</span>}
+            <span>informe o percentual de MDR*</span>
             <Input
               type="text"
               placeholder="MDR"
               name="mdr"
               register={register}
             />
-            <button>enviar</button>
+
+            <ModalContainer>
+              <span>informe os dias(opcional)*</span>
+              <ModalBox>
+                <ModalButton onClick={() => handleModal()}>+</ModalButton>
+              </ModalBox>
+            </ModalContainer>
+
+            <ButtonBox>
+              <FormButton type="submit">simular</FormButton>
+            </ButtonBox>
           </StyledForm>
         </>
       );
@@ -100,38 +153,3 @@ const Form = ({ name }) => {
   }
 };
 export default Form;
-
-{
-  /* <div name="modal">
-<label>30:</label>
-<Input
-  type="checkbox"
-  placeholder="MDR"
-  name="days"
-  value="30"
-  register={register}
-/>
-<label>60:</label>
-<Input
-  type="checkbox"
-  placeholder="MDR"
-  name="days"
-  value="60"
-  register={register}
-/>
-<label>90:</label>
-<Input
-  type="checkbox"
-  placeholder="days"
-  name="days"
-  value="90"
-  register={register}
-/>
-</div> */
-}
-
-// --data '{
-// "amount": 15000,
-// "installments": 3,
-// "mdr": 4
-// }'

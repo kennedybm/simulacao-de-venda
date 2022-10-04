@@ -1,8 +1,11 @@
+import { ModalControllerProvider } from "./modalController";
+import { SimulationProvider } from "./simulation";
+
 const Providers = ({ children }) => {
   return (
-    <>
-      <div></div>
-    </>
+    <SimulationProvider>
+      <ModalControllerProvider>{children}</ModalControllerProvider>;
+    </SimulationProvider>
   );
 };
 export default Providers;
